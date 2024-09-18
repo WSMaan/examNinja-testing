@@ -1,4 +1,4 @@
 FROM openjdk:17
-COPY ./target/hello-world-1.0-SNAPSHOT.jar /app/hello-world.jar
+COPY ./target/examNinja_frontend-1.0-SNAPSHOT.jar /app/examNinja_frontend.jar
 WORKDIR /app
-CMD ["java", "-jar", "hello-world.jar"]
+CMD ["java", "-jar", "examNinja_frontend.jar"]
