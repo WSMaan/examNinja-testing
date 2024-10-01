@@ -1,4 +1,10 @@
 FROM openjdk:17
-COPY ./target/examNinja_frontend-1.0-SNAPSHOT.jar /app/examNinja_frontend.jar
+
+# Copy the JAR file from the target folder of the backend (assuming backend project)
+COPY ./target/examNinja-testing-1.0-SNAPSHOT.jar /app/examNinja_testing.jar
+
+# Set the working directory to /app
 WORKDIR /app
-CMD ["java", "-jar", "examNinja_frontend.jar"]
+
+# Command to run the JAR file
+CMD ["java", "-jar", "examNinja_testing.jar"]
