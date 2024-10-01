@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>ExamNinjaRestAssured</artifactId>
+    <artifactId>ExamNinja2</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -14,27 +14,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
-        <!-- WireMock for stubbing -->
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
-            <version>2.35.0</version> <!-- Use the latest version -->
-        </dependency>
-
-        <!-- Rest Assured for API testing -->
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>5.3.0</version> <!-- Use the latest version -->
-            <scope>test</scope>
-        </dependency>
-
-        <!-- TestNG for testing framework -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>7.7.1</version> <!-- Use the latest version -->
-            <scope>test</scope>
+            <version>7.8.0</version>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
@@ -42,14 +25,10 @@
             <version>5.3.1</version>
         </dependency>
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>7.8.0</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.3</version>
         </dependency>
-
-
-
     </dependencies>
-
 
 </project>
