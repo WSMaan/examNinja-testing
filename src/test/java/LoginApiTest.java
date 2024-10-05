@@ -1,109 +1,48 @@
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import org.testng.annotations.BeforeClass;
+import io.restassured.response.Response;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+public class PasswordUpdateTest {
 
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.*;
+    // Base URI for the BBC website
+    private static final String BASE_URL = "https://www.bbc.com";
 
-public class LoginApiTest {
+    @Test
+    public void testHomepageStatus() {
+        // Send a GET request to the BBC homepage
+        Response response = RestAssured.get(BASE_URL);
 
-    @BeforeClass
-    public static void setup() {
-        // Base URI
-        RestAssured.baseURI = "http://localhost:8081"; // Update with your actual base URL
+        // Assert that the status code is 200 (OK)
+        Assert.assertEquals(response.getStatusCode(), 200, "Status code is not 200");
+
+        // Assert that the response content type is HTML
+        Assert.assertEquals(response.getContentType(), "text/html; charset=utf-8", "Content type is not HTML");
     }
 
     @Test
-    public void loginSuccessTest() {
-        // Request payload
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lily@Password1\" }";
+    public void testHomepageTitle() {
+        // Send a GET request to the BBC homepage
+        Response response = RestAssured.get(BASE_URL);
 
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)// Logs request details
-                .when()
-                .post("/api/users/login")
-                .then()// Logs response details
-                .statusCode(200)
-                .body("status", equalTo("success"))
-                .body("message", equalTo("User Logged in Successfully!"));
-    }
+        // Extract the HTML body
+        String htmlBody = response.getBody().asString();
 
-
-    @Test
-    public void loginFailedDueToPasswordMismatchTest() {
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lid1password\" }";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/users/login")
-                .then()
-                .statusCode(400)
-                .body("message", equalTo("Validation failed"))
-                .body("error.password", equalTo("Password must contain at least 1 special character."));
+        // Check if the title tag exists and contains expected text
+        Assert.assertTrue(htmlBody.contains("<title>BBC - Home</title>"), "Homepage title is not as expected");
     }
 
     @Test
-    public void loginFailedDueToInvalidEmailFormatTest() {
-        String requestBody = "{ \"email\": \"lilydavismail.com\", \"password\": \"Lily@Password1\" }";
+    public void testHomepageLinks() {
+        // Send a GET request to the BBC homepage
+        Response response = RestAssured.get(BASE_URL);
 
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/users/login")
-                .then()
-                .statusCode(400)
-                .body("message", equalTo("Validation failed"))
-                .body("error.email", equalTo("Email should be valid"));
-    }
+        // Extract the HTML body
+        String htmlBody = response.getBody().asString();
 
-    @Test
-    public void loginFailedUserNotFoundTest() {
-        String requestBody = "{ \"email\": \"lilavis@mail.com\", \"password\": \"Lily@Password1\" }";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/users/login")
-                .then()
-                .statusCode(404)
-                .body("message", equalTo("User not found"));
-    }
-
-    @Test
-    public void loginFailedEmailNullTest() {
-        String requestBody = "{ \"email\": \"\", \"password\": \"root#sde1\" }";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/users/login")
-                .then()
-                .statusCode(400)
-                .body("message", equalTo("Validation failed"))
-                .body("error.email", equalTo("Email is mandatory"));
-    }
-
-    @Test
-    public void loginFailedPasswordNullTest() {
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lid1#\" }";
-
-        given()
-                .contentType(ContentType.JSON)
-                .body(requestBody)
-                .when()
-                .post("/api/users/login")
-                .then()
-                .statusCode(400)
-                .body("message", equalTo("Validation failed"))
-                .body("error.password", equalTo("Password must be between 8 and 15 characters."));
+        // Check for specific links in the HTML
+        Assert.assertTrue(htmlBody.contains("href=\"/news\""), "Link to News is missing");
+        Assert.assertTrue(htmlBody.contains("href=\"/sport\""), "Link to Sport is missing");
+        Assert.assertTrue(htmlBody.contains("href=\"/weather\""), "Link to Weather is missing");
     }
 }
-
