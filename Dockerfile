@@ -10,7 +10,7 @@ WORKDIR /app
 COPY --from=build /app/target/ExamNinja-1.0-SNAPSHOT.jar app.jar
 
 # Expose the port your application runs on (if applicable)
-EXPOSE 8080
+EXPOSE 8081
 
 # Set the entry point to run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
