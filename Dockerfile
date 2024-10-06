@@ -14,6 +14,3 @@ EXPOSE 8081
 
 # Set the entry point to run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
-# Optional: Add a health check
-HEALTHCHECK CMD curl --fail http://localhost:8080/actuator/health || exit 1
