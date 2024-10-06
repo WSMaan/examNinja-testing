@@ -13,6 +13,9 @@ public class SampleDemo {
                 .then()
                 .assertThat()
                 .statusCode(200);
+        
+        // Print a success message if the test passes
+        System.out.println("Test 'testHomepageStatus' passed: The homepage status is 200 OK.");
     }
 
     @Test
@@ -28,7 +31,9 @@ public class SampleDemo {
         // Check if content type starts with text/html
         Assert.assertTrue(contentType.startsWith("text/html"),
                 "Content type is not HTML. Expected: text/html, Actual: " + contentType);
-        System.out.println("the test passed");
+        
+        // Print a success message if the test passes
+        System.out.println("Test 'testHomepageContentType' passed: The content type is HTML.");
     }
 
     @Test
@@ -45,6 +50,9 @@ public class SampleDemo {
         // Check if "News" link is present
         Assert.assertTrue(homepage.contains("News"),
                 "Link to News is missing");
+        
+        // Print a success message if the test passes
+        System.out.println("Test 'testHomepageLinks' passed: The 'News' link is present.");
     }
 
     @Test
@@ -58,7 +66,10 @@ public class SampleDemo {
                 .htmlPath()
                 .getString("html.head.title");
 
-        // Update this expected title as per the current title of    the BBC homepage
+        // Update this expected title as per the current title of the BBC homepage
         Assert.assertEquals(title, "BBC Home - Breaking News, World News, US News, Sports, Business, Innovation, Climate, Culture, Travel, Video & Audio", "Homepage title is not as expected");
+        
+        // Print a success message if the test passes
+        System.out.println("Test 'testHomepageTitle' passed: The homepage title is as expected.");
     }
 }
