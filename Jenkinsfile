@@ -1,16 +1,8 @@
 pipeline {
     agent any
     environment {
-        AWS_ACCOUNT_ID = "954976294733"
-        AWS_REGION = "us-east-1"
-        ECR_REPOSITORY_NAME = "examninja"
-        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        AWS_ACCESS_KEY_ID = 'AKIA54WIF25G5VQOVB45'
-        AWS_SECRET_ACCESS_KEY = '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'
-        BACKEND_DIR = 'backend'  // Ensure this matches the correct directory structure
         TEST_DIR = 'testing'  // Directory for the Rest Assured test repository
         FAILURE_REASON = ''  // To capture failure reason
-        DOCKER_IMAGE_TAG = "backend_latest"  // Tag for the backend Docker image
     }
     
     stages {
