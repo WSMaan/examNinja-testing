@@ -11,14 +11,13 @@ import static org.hamcrest.Matchers.containsString;
 
 public class UserFetchQuestions {
 
-    // Happy Path Test: Valid test_id and page_number
     @BeforeAll
     public static void setup() {
         RestAssured.baseURI = "http://localhost";  // Replace with the actual base URI
         RestAssured.port = 8081;                   // Replace with the actual port if needed
     }
 
-    // Happy Path Test: Valid test_id and page_number using WireMock with flexible assertions
+    // Happy Path Test: Valid test_id and page_number
     @Test
     public void testGetQuestionsHappyPath() {
         given()
@@ -50,7 +49,7 @@ public class UserFetchQuestions {
                 .body("pageDetails.pageSize", greaterThan(0))       // Page size should be greater than 0
                 .body("pageDetails.lastPage", notNullValue());      // Last page should not be null
     }
-    // Unhappy Path Test: Invalid test_id using WireMock
+    // Unhappy Path Test: Invalid test_id
     @Test
     public void testGetQuestionsInvalidTestId() {
 
@@ -67,7 +66,7 @@ public class UserFetchQuestions {
                 .body("message", containsString("No questions found for test with Test Id:"));
     }
 
-    // Unhappy Path Test: Invalid page number using WireMock
+    // Unhappy Path Test: Invalid page number
     @Test
     public void testGetQuestionsInvalidPage() {
 
