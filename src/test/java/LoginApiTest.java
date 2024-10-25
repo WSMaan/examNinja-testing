@@ -3,7 +3,7 @@ import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class PasswordUpdateTest {
+public class LoginApiTest {
 
     // Base URI for the BBC website
     private static final String BASE_URL = "https://www.bbc.com";
