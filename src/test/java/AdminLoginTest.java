@@ -21,7 +21,7 @@ public class AdminLoginTest {
     @Test
     public void testLoginSuccess() {
         // Request payload
-        String requestBody = "{ \"username\": \"admin\", \"password\": \"admin\" }";
+        String requestBody = "{ \"username\": \"adminUserName\", \"password\": \"adminPassword\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -50,7 +50,7 @@ public class AdminLoginTest {
     @Test
     public void testInvalidPassword() {
         // Request payload
-        String requestBody = "{ \"username\": \"admin\", \"password\": \"admin123\" }";
+        String requestBody = "{ \"username\": \"adminUserName\", \"password\": \"admin123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -64,7 +64,7 @@ public class AdminLoginTest {
     @Test
     public void testUserMandatory() {
         // Request payload
-        String requestBody = "{ \"username\": \"\", \"password\": \"admin123\" }";
+        String requestBody = "{ \"username\": \"\", \"password\": \"adminPassword\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -78,7 +78,7 @@ public class AdminLoginTest {
     @Test
     public void testPasswordMandatory() {
         // Request payload
-        String requestBody = "{ \"username\": \"admin\", \"password\": \"\" }";
+        String requestBody = "{ \"username\": \"adminUserName\", \"password\": \"\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -92,7 +92,7 @@ public class AdminLoginTest {
     @Test
     public void testLoginInternalServerError() {
         // Request payload
-        String requestBody = "{ \"username\": \"admin\", \"password\": \"admin\" }";
+        String requestBody = "{ \"username\": \"adminUserName\", \"password\": \"adminPassword\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -114,7 +114,7 @@ public class AdminLoginTest {
                 .when()
                 .post("/api/admin/login")
                 .then()
-                .statusCode(401)
-                .body("message", equalTo("Invalid credentials or not authorized as admin"));
+                .statusCode(404)
+                .body("message", equalTo("User not found"));
     }
 }
