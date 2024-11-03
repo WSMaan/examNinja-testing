@@ -1,24 +1,48 @@
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import org.junit.jupiter.api.BeforeEach;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.*;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
 public class LoginApiTest {
+
+    private String authToken;  // Token will be fetched and stored here
 
     @BeforeClass
     public static void setup() {
         // Base URI
         RestAssured.baseURI = "http://localhost:8081"; // Update with your actual base URL
     }
+    // This method simulates a login and retrieves the JWT token before each test
+    @BeforeEach
+    public void fetchAuthToken(){
+        // Simulate login or fetch the token from the token generation endpoint
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body("{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }")  // Replace with actual credentials
+                .when()
+                .post("/api/users/login")  // Replace with the actual login or token generation endpoint
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        /*
+            Bearer Token authentication is a common way to authenticate
+            API requests where the token (JWT in this case) is sent in the Authorization header.
+         */
+        // Extract JWT token from the response
+        authToken = "Bearer " + response.jsonPath().getString("token");  // Adjust the field name if necessary
+    }
+
 
     @Test
     public void loginSuccessTest() {
         // Request payload
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lily@Password1\" }";
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -34,7 +58,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedDueToPasswordMismatchTest() {
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lid1password\" }";
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -49,7 +73,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedDueToInvalidEmailFormatTest() {
-        String requestBody = "{ \"email\": \"lilydavismail.com\", \"password\": \"Lily@Password1\" }";
+        String requestBody = "{ \"email\": \"fooexample.com\", \"password\": \"fooWoo123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -64,7 +88,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedUserNotFoundTest() {
-        String requestBody = "{ \"email\": \"lilavis@mail.com\", \"password\": \"Lily@Password1\" }";
+        String requestBody = "{ \"email\": \"foo1@example.com\", \"password\": \"fooWoo@123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -78,7 +102,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedEmailNullTest() {
-        String requestBody = "{ \"email\": \"\", \"password\": \"root#sde1\" }";
+        String requestBody = "{ \"email\": \"\", \"password\": \"fooWoo@123\" }";
 
         given()
                 .contentType(ContentType.JSON)
@@ -93,7 +117,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedPasswordNullTest() {
-        String requestBody = "{ \"email\": \"lilydavis@mail.com\", \"password\": \"Lid1#\" }";
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"*****\" }";
 
         given()
                 .contentType(ContentType.JSON)
