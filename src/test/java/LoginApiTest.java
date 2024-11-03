@@ -58,7 +58,7 @@ public class LoginApiTest {
 
     @Test
     public void loginFailedDueToPasswordMismatchTest() {
-        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo123\" }";
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo1234\" }";
 
         given()
                 .contentType(ContentType.JSON)
