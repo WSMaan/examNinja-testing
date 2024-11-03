@@ -1,48 +1,133 @@
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.testng.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PasswordUpdateTest {
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
-    // Base URI for the BBC website
-    private static final String BASE_URL = "https://www.bbc.com";
+public class LoginApiTest {
+
+    private String authToken;  // Token will be fetched and stored here
+
+    @BeforeClass
+    public static void setup() {
+        // Base URI
+        RestAssured.baseURI = "http://localhost:8081"; // Update with your actual base URL
+    }
+    // This method simulates a login and retrieves the JWT token before each test
+    @BeforeEach
+    public void fetchAuthToken(){
+        // Simulate login or fetch the token from the token generation endpoint
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body("{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }")  // Replace with actual credentials
+                .when()
+                .post("/api/users/login")  // Replace with the actual login or token generation endpoint
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        /*
+            Bearer Token authentication is a common way to authenticate
+            API requests where the token (JWT in this case) is sent in the Authorization header.
+         */
+        // Extract JWT token from the response
+        authToken = "Bearer " + response.jsonPath().getString("token");  // Adjust the field name if necessary
+    }
+
 
     @Test
-    public void testHomepageStatus() {
-        // Send a GET request to the BBC homepage
-        Response response = RestAssured.get(BASE_URL);
+    public void loginSuccessTest() {
+        // Request payload
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }";
 
-        // Assert that the status code is 200 (OK)
-        Assert.assertEquals(response.getStatusCode(), 200, "Status code is not 200");
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)// Logs request details
+                .when()
+                .post("/api/users/login")
+                .then()// Logs response details
+                .statusCode(200)
+                .body("status", equalTo("success"))
+                .body("message", equalTo("User Logged in Successfully!"));
+    }
 
-        // Assert that the response content type is HTML
-        Assert.assertEquals(response.getContentType(), "text/html; charset=utf-8", "Content type is not HTML");
+
+    @Test
+    public void loginFailedDueToPasswordMismatchTest() {
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"fooWoo123\" }";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/users/login")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Validation failed"))
+                .body("error.password", equalTo("Password must contain at least 1 special character."));
     }
 
     @Test
-    public void testHomepageTitle() {
-        // Send a GET request to the BBC homepage
-        Response response = RestAssured.get(BASE_URL);
+    public void loginFailedDueToInvalidEmailFormatTest() {
+        String requestBody = "{ \"email\": \"fooexample.com\", \"password\": \"fooWoo123\" }";
 
-        // Extract the HTML body
-        String htmlBody = response.getBody().asString();
-
-        // Check if the title tag exists and contains expected text
-        Assert.assertTrue(htmlBody.contains("<title>BBC - Home</title>"), "Homepage title is not as expected");
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/users/login")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Validation failed"))
+                .body("error.email", equalTo("Email should be valid"));
     }
 
     @Test
-    public void testHomepageLinks() {
-        // Send a GET request to the BBC homepage
-        Response response = RestAssured.get(BASE_URL);
+    public void loginFailedUserNotFoundTest() {
+        String requestBody = "{ \"email\": \"foo1@example.com\", \"password\": \"fooWoo@123\" }";
 
-        // Extract the HTML body
-        String htmlBody = response.getBody().asString();
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/users/login")
+                .then()
+                .statusCode(404)
+                .body("message", equalTo("User not found"));
+    }
 
-        // Check for specific links in the HTML
-        Assert.assertTrue(htmlBody.contains("href=\"/news\""), "Link to News is missing");
-        Assert.assertTrue(htmlBody.contains("href=\"/sport\""), "Link to Sport is missing");
-        Assert.assertTrue(htmlBody.contains("href=\"/weather\""), "Link to Weather is missing");
+    @Test
+    public void loginFailedEmailNullTest() {
+        String requestBody = "{ \"email\": \"\", \"password\": \"fooWoo@123\" }";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/users/login")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Validation failed"))
+                .body("error.email", equalTo("Email is mandatory"));
+    }
+
+    @Test
+    public void loginFailedPasswordNullTest() {
+        String requestBody = "{ \"email\": \"foo@example.com\", \"password\": \"*****\" }";
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/api/users/login")
+                .then()
+                .statusCode(400)
+                .body("message", equalTo("Validation failed"))
+                .body("error.password", equalTo("Password must be between 8 and 15 characters."));
     }
 }
+
