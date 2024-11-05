@@ -8,7 +8,7 @@ pipeline {
         AWS_ACCESS_KEY_ID = ''
         AWS_SECRET_ACCESS_KEY = ''
         BACKEND_DIR = 'backend'
-        TETSING_DIR -= 'testing'
+        TESTING_DIR = 'testing'
         FAILURE_REASON = ''  // To capture failure reason
     }
     stages {
@@ -17,8 +17,9 @@ pipeline {
                 dir(BACKEND_DIR) {
                     git branch: 'master', url: 'https://github.com/WSMaan/examNinja-backend.git', credentialsId: 'GIT_HUB'
                 }
-               dir(Testing){
-                   git branch:'master', url: 'https://github.com/WSMaan/examNinja-testing.git', crendentialsId: 'GIT_HUB'
+                dir(TESTING_DIR) {
+                    git branch: 'master', url: 'https://github.com/WSMaan/examNinja-testing.git', credentialsId: 'GIT_HUB'
+                }
             }
         }
 
@@ -52,16 +53,29 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
-            steps {
-                // Ensure kubectl is configured for your EKS cluster
-                sh 'aws eks --region ${AWS_REGION} update-kubeconfig --name examninja' // Change 'my-cluster' to your cluster name
-                // Apply Kubernetes deployment files
-                dir(BACKEND_DIR) {
-                    sh 'kubectl apply -f k8s/backend-deployment.yaml' // Ensure your backend deployment file is correctly defined
-                }
-            }
-        }
+        // stage('Deploy to EKS') {
+        //     steps {
+        //         // Ensure kubectl is configured for your EKS cluster
+        //         sh 'aws eks --region ${AWS_REGION} update-kubeconfig --name examninja' // Change 'my-cluster' to your cluster name
+        //         // Apply Kubernetes deployment files
+        //         dir(BACKEND_DIR) {
+        //             sh 'kubectl apply -f k8s/backend-deployment.yaml' // Ensure your backend deployment file is correctly defined
+        //         }
+        //     }
+        // }
+        
+        // stage('Run JMeter Load Tests') {
+        //     steps {
+        //         script {
+        //             sh '/opt/jmeter/bin/jmeter -n -t ${WORKSPACE}/${TESTING_DIR}/Test_Plan.jmx -l ${WORKSPACE}/results.jtl -Jbackend_url=http://your-backend-url -Jfrontend_url=http://your-frontend-url'
+        //         }
+        //     }
+        //     post {
+        //         always {
+        //             archiveArtifacts artifacts: 'results.jtl', fingerprint: true
+        //         }
+        //     }
+        // }
     }
 
     post {
@@ -79,5 +93,4 @@ pipeline {
             echo 'Pipeline succeeded!'
         }
     }
-}
 }
