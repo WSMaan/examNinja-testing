@@ -149,7 +149,7 @@ pipeline {
 
         stage('Push Docker Images to ECR') {
             when {
-                success()
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 script {
