@@ -5,8 +5,8 @@ pipeline {
         AWS_REGION = "us-east-2"
         ECR_REPOSITORY_NAME = "examninja"
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        AWS_ACCESS_KEY_ID = 'AKIAYPSFWECMEWUAFVUR'
-        AWS_SECRET_ACCESS_KEY = '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'
+        AWS_ACCESS_KEY_ID = ''
+        AWS_SECRET_ACCESS_KEY = ''
         BACKEND_DIR = 'backend'
         TESTING_DIR = 'testing'
         FAILURE_REASON = ''  // To capture failure reason
@@ -38,20 +38,20 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
-            steps {
-                dir(BACKEND_DIR) {
-                    sh 'docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest .'
-                }
-            }
-        }
+        // stage('Build Docker Images') {
+        //     steps {
+        //         dir(BACKEND_DIR) {
+        //             sh 'docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest .'
+        //         }
+        //     }
+        // }
         
-        stage('Push Docker Images to ECR') {
-            steps {
-                sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-                sh 'docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest'
-            }
-        }
+        // stage('Push Docker Images to ECR') {
+        //     steps {
+        //         sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
+        //         sh 'docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest'
+        //     }
+        // }
 
         // stage('Deploy to EKS') {
         //     steps {
