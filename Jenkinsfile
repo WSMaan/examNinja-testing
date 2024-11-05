@@ -109,7 +109,7 @@ pipeline {
                     def registerResponse = sh(script: """
                     curl -X POST http://localhost:8081/api/users/register \
                     -H "Content-Type: application/json" \
-                    -d '{ "email": "foo@example.com", "password": "password@123" }'
+                    -d '{ "email": "foo@example.com", "password": "password@123", "firstName": "Foo", "lastName": "Bar" }'
                     """, returnStdout: true).trim()
                     echo "Registration Response: ${registerResponse}"
 
@@ -119,8 +119,12 @@ pipeline {
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
 
-                    env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
-                    echo "Obtained Auth Token: ${AUTH_TOKEN}"
+                    if (loginResponse.contains("token")) {
+                        env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
+                        echo "Obtained Auth Token: ${AUTH_TOKEN}"
+                    } else {
+                        error("Login failed: ${loginResponse}")
+                    }
                 }
             }
             post {
