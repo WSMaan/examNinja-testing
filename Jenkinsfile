@@ -107,7 +107,7 @@ pipeline {
                     // Poll for the backend service to be up
                     timeout(time: 5, unit: 'MINUTES') {
                         waitUntil {
-                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://backend:8081/api/health", returnStdout: true).trim()
+                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/health", returnStdout: true).trim()
                             return response == '200' // Adjust based on your health check endpoint
                         }
                     }
@@ -120,7 +120,7 @@ pipeline {
                 script {
                     // Register user (this will likely be skipped if already registered)
                     def registerResponse = sh(script: """
-                    curl -X POST http://backend:8081/api/users/register \
+                    curl -X POST http://localhost:8081/api/users/register \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
@@ -130,7 +130,7 @@ pipeline {
 
                     // Login user and capture the response
                     def loginResponse = sh(script: """
-                    curl -X POST http://backend:8081/api/users/login \
+                    curl -X POST http://localhost:8081/api/users/login \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
