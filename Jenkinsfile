@@ -40,15 +40,7 @@ pipeline {
         stage('Build Docker Images Locally') {
             steps {
                 script {
-                    // Build the Docker images but do not push to ECR yet
-                    sh "docker build -t ${ECR_REPOSITORY_NAME}:backend_latest ${BACKEND_DIR}"
-                }
-            }
-            post {
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'docker build'
-                    }
+                    sh "docker build -t examninja:backend_latest ${BACKEND_DIR}"
                 }
             }
         }
@@ -56,7 +48,6 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 script {
-                    // Write docker-compose file and use locally built images
                     writeFile(file: 'docker-compose.yml', text: """
                     version: '3.8'
                     services:
@@ -77,7 +68,7 @@ pipeline {
                           - examninja-network
                           
                       backend:
-                        image: ${ECR_REPOSITORY_NAME}:backend_latest
+                        image: examninja:backend_latest
                         container_name: examninja-backend
                         depends_on:
                           mysql:
@@ -94,7 +85,7 @@ pipeline {
                     networks:
                       examninja-network:
                     """)
-
+                    
                     sh 'docker-compose up -d'
                     sh 'docker logs examninja-backend' // Fetch backend logs immediately after startup
                 }
@@ -118,9 +109,11 @@ pipeline {
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
+                    echo "Login Response: ${loginResponse}"
 
+                    // Parse the token from the login response if it's present
                     if (loginResponse.contains("token")) {
-                        env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
+                        env.AUTH_TOKEN = sh(script: "echo '${loginResponse}' | jq -r .token", returnStdout: true).trim()
                         echo "Obtained Auth Token: ${AUTH_TOKEN}"
                     } else {
                         error("Login failed: ${loginResponse}")
@@ -153,13 +146,13 @@ pipeline {
 
         stage('Push Docker Images to ECR') {
             when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                expression { env.FAILURE_REASON == '' } // Only push if there are no failures
             }
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
                         sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-                        sh "docker tag ${ECR_REPOSITORY_NAME}:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
+                        sh "docker tag examninja:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                         sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                     }
                 }
@@ -178,7 +171,7 @@ pipeline {
             }
         }
         success {
-            echo 'Pipeline succeeded and Docker images have been pushed to ECR!'
+            echo 'Pipeline succeeded!'
         }
     }
 }
