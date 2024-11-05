@@ -145,7 +145,7 @@ pipeline {
 
         stage('Push Docker Images to ECR') {
             when {
-                expression { env.FAILURE_REASON == '' } // Only push if there are no failures
+                expression { env.FAILURE_REASON == null || env.FAILURE_REASON == '' } // Only push if there are no failures
             }
             steps {
                 script {
