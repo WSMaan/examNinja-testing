@@ -120,4 +120,47 @@ pipeline {
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
 
-          
+                    env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
+                    echo "Obtained Auth Token: ${AUTH_TOKEN}"
+                }
+            }
+            post {
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'registration/login'
+                    }
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir(TESTING_DIR) {
+                    sh "mvn clean test -DauthToken=${AUTH_TOKEN}"
+                }
+            }
+            post {
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'tests'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker-compose down'
+            cleanWs()
+        }
+        failure {
+            script {
+                echo "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage."
+            }
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+    }
+}
