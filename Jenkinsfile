@@ -37,27 +37,26 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Image to ECR') {
+        stage('Build Docker Images Locally') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
-                        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-                        sh "docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest ${BACKEND_DIR}"
-                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
-                    }
+                    // Build the Docker images but do not push to ECR yet
+                    sh "docker build -t ${ECR_REPOSITORY_NAME}:backend_latest ${BACKEND_DIR}"
                 }
             }
-        }
-
-        stage('Pull Docker Images') {
-            steps {
-                sh 'docker-compose pull'
+            post {
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'docker build'
+                    }
+                }
             }
         }
 
         stage('Run Docker Containers') {
             steps {
                 script {
+                    // Write docker-compose file and use locally built images
                     writeFile(file: 'docker-compose.yml', text: """
                     version: '3.8'
                     services:
@@ -78,7 +77,7 @@ pipeline {
                           - examninja-network
                           
                       backend:
-                        image: ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest
+                        image: ${ECR_REPOSITORY_NAME}:backend_latest
                         container_name: examninja-backend
                         depends_on:
                           mysql:
@@ -147,6 +146,21 @@ pipeline {
                 }
             }
         }
+
+        stage('Push Docker Images to ECR') {
+            when {
+                success()
+            }
+            steps {
+                script {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
+                        sh "docker tag ${ECR_REPOSITORY_NAME}:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
+                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -160,7 +174,7 @@ pipeline {
             }
         }
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Pipeline succeeded and Docker images have been pushed to ECR!'
         }
     }
 }
