@@ -104,8 +104,13 @@ pipeline {
         stage('Wait for Services to be Ready') {
             steps {
                 script {
-                    // You may want to implement a wait or polling mechanism here to check if the services are ready
-                    sleep(time: 60, unit: 'SECONDS') // Adjust the wait time as necessary
+                    // Poll for the backend service to be up
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitUntil {
+                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://backend:8081/api/health", returnStdout: true).trim()
+                            return response == '200' // Adjust based on your health check endpoint
+                        }
+                    }
                 }
             }
         }
@@ -113,9 +118,9 @@ pipeline {
         stage('Register and Login') {
             steps {
                 script {
-                    // Attempt to register user (this will likely be skipped if already registered)
+                    // Register user (this will likely be skipped if already registered)
                     def registerResponse = sh(script: """
-                    curl -X POST http://localhost:8081/api/users/register \
+                    curl -X POST http://backend:8081/api/users/register \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
@@ -125,7 +130,7 @@ pipeline {
 
                     // Login user and capture the response
                     def loginResponse = sh(script: """
-                    curl -X POST http://localhost:8081/api/users/login \
+                    curl -X POST http://backend:8081/api/users/login \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
