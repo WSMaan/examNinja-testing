@@ -8,6 +8,7 @@ pipeline {
         AWS_ACCESS_KEY_ID = ''
         AWS_SECRET_ACCESS_KEY = ''
         BACKEND_DIR = 'backend'
+        TETSING_DIR -= 'testing'
         FAILURE_REASON = ''  // To capture failure reason
     }
     stages {
