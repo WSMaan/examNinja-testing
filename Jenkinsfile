@@ -5,8 +5,8 @@ pipeline {
         AWS_REGION = "us-east-2"
         ECR_REPOSITORY_NAME = "examninja"
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        AWS_ACCESS_KEY_ID = ''
-        AWS_SECRET_ACCESS_KEY = ''
+        AWS_ACCESS_KEY_ID = 'AKIAYPSFWECMEWUAFVUR'
+        AWS_SECRET_ACCESS_KEY = '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'
         BACKEND_DIR = 'backend'
         TESTING_DIR = 'testing'
         FAILURE_REASON = ''  // To capture failure reason
@@ -78,19 +78,19 @@ pipeline {
         // }
     }
 
-    post {
-        always {
-            cleanWs()
-        }
-        failure {
-            script {
-                echo "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage."
-                // slackSend(channel: '#exam-ninja', color: 'danger', message: "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage. Check Jenkins for details.")
-            }
-        }
-        success {
-            // slackSend(channel: '#exam-ninja', color: 'good', message: 'Pipeline succeeded!')
-            echo 'Pipeline succeeded!'
-        }
-    }
+    // post {
+    //     always {
+    //         cleanWs()
+    //     }
+    //     failure {
+    //         script {
+    //             echo "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage."
+    //             // slackSend(channel: '#exam-ninja', color: 'danger', message: "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage. Check Jenkins for details.")
+    //         }
+    //     }
+    //     success {
+    //         // slackSend(channel: '#exam-ninja', color: 'good', message: 'Pipeline succeeded!')
+    //         echo 'Pipeline succeeded!'
+    //     }
+    // }
 }
