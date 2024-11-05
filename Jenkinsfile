@@ -37,57 +37,66 @@ pipeline {
             }
         }
 
-        stage('Run Docker Containers') {
+        stage('Build and Push Docker Image to ECR') {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
                         // Login to ECR
                         sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-                        
-                        // Pull the latest backend image from ECR
-                        sh "docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
-                        
-                        // Write the Docker Compose file with the latest image
-                        writeFile(file: 'docker-compose.yml', text: """
-                        version: '3.8'
-                        services:
-                          mysql:
-                            image: mysql:latest
-                            container_name: mysql-container
-                            environment:
-                              MYSQL_ROOT_PASSWORD: root@123
-                              MYSQL_DATABASE: exam
-                            ports:
-                              - "9308:3306"
-                            healthcheck:
-                              test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot@123" ]
-                              interval: 30s
-                              timeout: 10s
-                              retries: 5
-                            networks:
-                              - examninja-network
-                            
-                          backend:
-                            image: ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest
-                            container_name: examninja-backend
-                            depends_on:
-                              mysql:
-                                condition: service_healthy
-                            ports:
-                              - "8081:8081"
-                            networks:
-                              - examninja-network
 
-                        volumes:
-                          db_data:
+                        // Build the Docker image
+                        sh "docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest ${BACKEND_DIR}"
 
-                        networks:
-                          examninja-network:
-                        """)
-                        
-                        // Start the services using the latest image
-                        sh 'docker-compose up -d'
+                        // Push the Docker image to ECR
+                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                     }
+                }
+            }
+        }
+
+        stage('Run Docker Containers') {
+            steps {
+                script {
+                    // Write the Docker Compose file with the latest image
+                    writeFile(file: 'docker-compose.yml', text: """
+                    version: '3.8'
+                    services:
+                      mysql:
+                        image: mysql:latest
+                        container_name: mysql-container
+                        environment:
+                          MYSQL_ROOT_PASSWORD: root@123
+                          MYSQL_DATABASE: exam
+                        ports:
+                          - "9308:3306"
+                        healthcheck:
+                          test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot@123" ]
+                          interval: 30s
+                          timeout: 10s
+                          retries: 5
+                        networks:
+                          - examninja-network
+                          
+                      backend:
+                        image: ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest
+                        container_name: examninja-backend
+                        depends_on:
+                          mysql:
+                            condition: service_healthy
+                        ports:
+                          - "8081:8081"
+                        networks:
+                          - examninja-network
+
+                    volumes:
+                      db_data:
+
+                    networks:
+                      examninja-network:
+                    """)
+
+                    // Start the services using the latest image
+                    sh 'docker-compose up -d'
                 }
             }
         }
