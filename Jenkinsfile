@@ -41,13 +41,8 @@ pipeline {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
-                        // Login to ECR
                         sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-
-                        // Build the Docker image
                         sh "docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest ${BACKEND_DIR}"
-
-                        // Push the Docker image to ECR
                         sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                     }
                 }
@@ -57,7 +52,6 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 script {
-                    // Write the Docker Compose file with the latest image
                     writeFile(file: 'docker-compose.yml', text: """
                     version: '3.8'
                     services:
@@ -71,7 +65,7 @@ pipeline {
                           - "9308:3306"
                         healthcheck:
                           test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot@123" ]
-                          interval: 30s
+                          interval: 60s # Increased interval
                           timeout: 10s
                           retries: 5
                         networks:
@@ -95,8 +89,8 @@ pipeline {
                       examninja-network:
                     """)
 
-                    // Start the services using the latest image
                     sh 'docker-compose up -d'
+                    sh 'docker logs examninja-backend' // Fetch backend logs immediately after startup
                 }
             }
         }
@@ -104,24 +98,21 @@ pipeline {
         stage('Register and Login') {
             steps {
                 script {
-                    // Register user (this will likely be skipped if already registered)
+                    sh 'sleep 30' // Allow time for backend to initialize
+
                     def registerResponse = sh(script: """
                     curl -X POST http://localhost:8081/api/users/register \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
-
-                    // Log the registration response (optional)
                     echo "Registration Response: ${registerResponse}"
 
-                    // Login user and capture the response
                     def loginResponse = sh(script: """
                     curl -X POST http://localhost:8081/api/users/login \
                     -H "Content-Type: application/json" \
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
 
-                    // Parse the auth token from the login response
                     env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
                     echo "Obtained Auth Token: ${AUTH_TOKEN}"
                 }
@@ -138,8 +129,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 dir(TESTING_DIR) {
-                    // You can pass the token as an environment variable or use it in your tests
-                    sh "mvn clean test -DauthToken=${AUTH_TOKEN}" // Adjust if your test setup requires the token differently
+                    sh "mvn clean test -DauthToken=${AUTH_TOKEN}"
                 }
             }
             post {
@@ -154,7 +144,6 @@ pipeline {
 
     post {
         always {
-            // Stop and remove Docker containers
             sh 'docker-compose down'
             cleanWs()
         }
