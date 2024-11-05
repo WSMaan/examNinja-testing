@@ -106,10 +106,16 @@ pipeline {
                 script {
                     // Poll for the backend service to be up
                     timeout(time: 5, unit: 'MINUTES') {
-                        waitUntil {
-                            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/health", returnStdout: true).trim()
-                            echo "Backend health check response: ${response}"
-                            return response == '200' // Adjust based on your health check endpoint
+                        try {
+                            waitUntil {
+                                def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/health", returnStdout: true).trim()
+                                echo "Backend health check response: ${response}"
+                                return response == '200' // Adjust based on your health check endpoint
+                            }
+                        } catch (Exception e) {
+                            echo "Backend service failed to start. Fetching backend logs for debugging."
+                            sh 'docker logs examninja-backend' // Capture logs before failure
+                            error "Backend service health check failed."
                         }
                     }
                 }
@@ -175,9 +181,6 @@ pipeline {
         }
         failure {
             script {
-                // Output Docker logs for debugging if there's a failure
-                echo "Fetching logs for debugging..."
-                sh 'docker logs examninja-backend'
                 echo "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage."
             }
         }
