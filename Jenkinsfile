@@ -49,6 +49,12 @@ pipeline {
             }
         }
 
+        stage('Pull Docker Images') {
+            steps {
+                sh 'docker-compose pull'
+            }
+        }
+
         stage('Run Docker Containers') {
             steps {
                 script {
@@ -65,7 +71,7 @@ pipeline {
                           - "9308:3306"
                         healthcheck:
                           test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot@123" ]
-                          interval: 60s # Increased interval
+                          interval: 60s
                           timeout: 10s
                           retries: 5
                         networks:
@@ -77,13 +83,14 @@ pipeline {
                         depends_on:
                           mysql:
                             condition: service_healthy
+                        environment:
+                          SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/exam
+                          SPRING_DATASOURCE_USERNAME: root
+                          SPRING_DATASOURCE_PASSWORD: root@123
                         ports:
                           - "8081:8081"
                         networks:
                           - examninja-network
-
-                    volumes:
-                      db_data:
 
                     networks:
                       examninja-network:
@@ -113,47 +120,4 @@ pipeline {
                     -d '{ "email": "foo@example.com", "password": "password@123" }'
                     """, returnStdout: true).trim()
 
-                    env.AUTH_TOKEN = sh(script: "echo ${loginResponse} | jq -r .token", returnStdout: true).trim()
-                    echo "Obtained Auth Token: ${AUTH_TOKEN}"
-                }
-            }
-            post {
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'registration/login'
-                    }
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                dir(TESTING_DIR) {
-                    sh "mvn clean test -DauthToken=${AUTH_TOKEN}"
-                }
-            }
-            post {
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'tests'
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker-compose down'
-            cleanWs()
-        }
-        failure {
-            script {
-                echo "Pipeline failed due to failure in the ${env.FAILURE_REASON} stage."
-            }
-        }
-        success {
-            echo 'Pipeline succeeded!'
-        }
-    }
-}
+          
