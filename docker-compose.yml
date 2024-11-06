@@ -33,3 +33,4 @@ services:
 
 networks:
   examninja-network:
+    name: examninja_network_unique
