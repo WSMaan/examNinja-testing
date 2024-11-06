@@ -59,7 +59,7 @@ public class TestAdminLoginPage extends BaseSetUp{
         WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
         userName.sendKeys(p.get("uName").toString());
         WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
-        password.sendKeys("drs@12Sol");
+        password.sendKeys("Adminpassword");
         WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
         l_button.click();
 
@@ -91,7 +91,7 @@ public class TestAdminLoginPage extends BaseSetUp{
         WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
         userName.sendKeys("userName");
         WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
-        password.sendKeys("abcdef#12");
+        password.sendKeys("Adminpassword");
         WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
         l_button.click();
 
