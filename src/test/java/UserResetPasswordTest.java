@@ -87,7 +87,7 @@ public class UserResetPasswordTest {
                 .statusCode(400)
                 .log().ifError()
                 .body("message", equalTo("Validation failed"))
-                .body("error.email", equalTo("Email is mandatory"));
+                .body("error.email", equalTo("Email field can't be empty"));
     }
 
     // Test Case 5: Reset Password with Missing Email Field
