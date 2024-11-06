@@ -54,25 +54,25 @@ pipeline {
             }
         }
 
-        stage('Run RestAssured Tests') {
-            steps {
-                dir(TESTING_DIR) {
-                    // Run the RestAssured tests using Maven, passing any needed parameters
-                    sh "mvn clean test -DapiUrl=http://localhost:8081"
-                }
-            }
-            post {
-                always {
-                    // Publish JUnit test results if you’re using JUnit
-                    junit '**/target/surefire-reports/*.xml'
-                }
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'tests'
-                    }
-                }
+       stage('Run RestAssured Tests') {
+    steps {
+        dir(TESTING_DIR) {
+            // Use Docker service name 'backend' instead of 'localhost'
+            sh "mvn clean test -DapiUrl=http://backend:8081"
+        }
+    }
+    post {
+        always {
+            junit '**/target/surefire-reports/*.xml'
+        }
+        failure {
+            script {
+                env.FAILURE_REASON = 'tests'
             }
         }
+    }
+}
+
 
         stage('Push Docker Images to ECR') {
             when {
