@@ -8,7 +8,6 @@ pipeline {
         BACKEND_DIR = 'backend'
         TESTING_DIR = 'testing'
         FAILURE_REASON = ''  // To capture failure reason
-        AUTH_TOKEN = '' // Variable to store the auth token
     }
     stages {
         stage('Clone Repositories') {
@@ -77,7 +76,7 @@ pipeline {
                     // Parse the token from the login response if it's present
                     if (loginResponse.contains("token")) {
                         env.AUTH_TOKEN = sh(script: "echo '${loginResponse}' | jq -r .token", returnStdout: true).trim()
-                        echo "Obtained Auth Token: ${AUTH_TOKEN}"
+                        echo "Obtained Auth Token: ${env.AUTH_TOKEN}"
                     } else {
                         error("Login failed: ${loginResponse}")
                     }
@@ -95,7 +94,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 dir(TESTING_DIR) {
-                    sh "mvn clean test -DauthToken=${AUTH_TOKEN}"
+                    sh "mvn clean test -DauthToken=${env.AUTH_TOKEN}"
                 }
             }
             post {
@@ -109,7 +108,7 @@ pipeline {
 
         stage('Push Docker Images to ECR') {
             when {
-                expression { env.FAILURE_REASON == '' } // Only push if there are no failures
+                expression { env.FAILURE_REASON == null || env.FAILURE_REASON == '' } // Only push if there are no failures
             }
             steps {
                 script {
@@ -125,7 +124,7 @@ pipeline {
 
     post {
         always {
-            sh 'docker-compose down'
+            sh 'docker-compose -f testing/docker-compose.yml down'
             cleanWs()
         }
         failure {
