@@ -20,9 +20,9 @@ echo "Login Response: $login_response"
 # Extract token from login response
 auth_token=$(echo "$login_response" | jq -r .token)
 
-# Check if token is present
+# Check if token is present and save it in the correct directory
 if [ "$auth_token" != "null" ]; then
-  echo "$auth_token" > auth_token.txt
+  echo "$auth_token" > testing/auth_token.txt
   echo "Obtained Auth Token: $auth_token"
 else
   echo "Login failed: $login_response"
