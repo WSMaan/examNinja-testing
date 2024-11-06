@@ -54,38 +54,18 @@ pipeline {
             }
         }
 
-     stage('Register and Login') {
-    steps {
-        script {
-            // Set executable permission for api_tests.sh
-            sh 'chmod +x testing/api_tests.sh'
-
-            // Run the API test script
-            sh 'testing/api_tests.sh'
-
-            // Read the auth token from the generated file
-            env.AUTH_TOKEN = readFile('testing/auth_token.txt').trim()
-            echo "Obtained Auth Token: ${env.AUTH_TOKEN}"
-        }
-    }
-    post {
-        failure {
-            script {
-                env.FAILURE_REASON = 'registration/login'
-            }
-        }
-    }
-}
-
-
-
-        stage('Run Tests') {
+        stage('Run RestAssured Tests') {
             steps {
                 dir(TESTING_DIR) {
-                    sh "mvn clean test -DauthToken=${env.AUTH_TOKEN}"
+                    // Run the RestAssured tests using Maven, passing any needed parameters
+                    sh "mvn clean test -DapiUrl=http://localhost:8081"
                 }
             }
             post {
+                always {
+                    // Publish JUnit test results if you’re using JUnit
+                    junit '**/target/surefire-reports/*.xml'
+                }
                 failure {
                     script {
                         env.FAILURE_REASON = 'tests'
