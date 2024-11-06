@@ -54,9 +54,12 @@ pipeline {
             }
         }
 
-       stage('Register and Login') {
+      stage('Register and Login') {
     steps {
         script {
+            // Set executable permission for api_tests.sh
+            sh 'chmod +x testing/api_tests.sh'
+
             // Run the API test script
             sh 'testing/api_tests.sh'
 
@@ -73,6 +76,7 @@ pipeline {
         }
     }
 }
+
 
 
         stage('Run Tests') {
