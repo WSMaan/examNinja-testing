@@ -48,45 +48,8 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 script {
-                    writeFile(file: 'docker-compose.yml', text: """
-                    version: '3.8'
-                    services:
-                      mysql:
-                        image: mysql:latest
-                        container_name: mysql-container
-                        environment:
-                          MYSQL_ROOT_PASSWORD: root@123
-                          MYSQL_DATABASE: exam
-                        ports:
-                          - "9308:3306"
-                        healthcheck:
-                          test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot@123" ]
-                          interval: 60s
-                          timeout: 10s
-                          retries: 5
-                        networks:
-                          - examninja-network
-                          
-                      backend:
-                        image: examninja:backend_latest
-                        container_name: examninja-backend
-                        depends_on:
-                          mysql:
-                            condition: service_healthy
-                        environment:
-                          SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/exam
-                          SPRING_DATASOURCE_USERNAME: root
-                          SPRING_DATASOURCE_PASSWORD: root@123
-                        ports:
-                          - "8081:8081"
-                        networks:
-                          - examninja-network
-
-                    networks:
-                      examninja-network:
-                    """)
-                    
-                    sh 'docker-compose up -d'
+                    // Reference the docker-compose.yml file from the testing directory
+                    sh 'docker-compose -f testing/docker-compose.yml up -d'
                     sh 'docker logs examninja-backend' // Fetch backend logs immediately after startup
                 }
             }
