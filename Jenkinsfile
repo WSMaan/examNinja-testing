@@ -54,7 +54,7 @@ pipeline {
             }
         }
 
-      stage('Register and Login') {
+     stage('Register and Login') {
     steps {
         script {
             // Set executable permission for api_tests.sh
