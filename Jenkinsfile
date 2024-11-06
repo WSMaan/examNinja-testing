@@ -57,7 +57,7 @@ pipeline {
        stage('Run RestAssured Tests') {
     steps {
         dir(TESTING_DIR) {
-            // Use Docker service name 'backend' instead of 'localhost'
+           
             sh "mvn clean test -DapiUrl=http://backend:8081"
         }
     }
