@@ -1,0 +1,11 @@
+question,option1,option2,option3,option4,correct_answer,answer_description,category,level,questionType,test_id
+dwdwd,Yes,No,ewwe,wefwe,Yes,fewwe,OOP,few,MCQ,2
+What is Polymorphism?,Yes,No,wfew,wfw,Yes,Polymorphism allows one method to have different implementations.,OOP,medium,MCQ,2
+What is Encapsulation?,Yes,No,ffew,few,Yes,Encapsulation restricts access to object data and methods.,OOP,easy,MCQ,3
+dsddd,extends,implements,new,super,extends,The extends keyword is used for inheritance in Java.,Core Java,easy,MCQ,4
+What is abstraction?,Yes,No,cds,fvd,Yes,Abstraction hides the implementation details and shows only functionality.,OOP,medium,MCQ,5
+Which of the following is not a Java keyword?,public,final,string,static,string,'string' is not a keyword in Java; the correct keyword is 'String'.,Core Java,easy,MCQ,4
+True or False: Java is platform-independent.,TRUE,FALSE,vdf,vdfv,TRUE,Java can run on any platform with JVM.,Core Java,easy,True/False,5
+What does JVM stand for?,Java Virtual Machine,Java Variable Machine,Java Vector Machine,None,Java Virtual Machine,sdfghhjkkjkljhl,Core Java,easy,MCQ,6
+What is the output of 'System.out.println(2 + 3 * 4)'?,14,20,18,8,14,Operator precedence: multiplication happens before addition.,Core Java,easy,MCQ,7
+What does OOP stand for?,Object-Oriented Programming,Object Operated Programming,Operation Oriented Programming,None,Object-Oriented Programming,OOP is a programming paradigm based on objects and classes.,OOP,easy,MCQ,4

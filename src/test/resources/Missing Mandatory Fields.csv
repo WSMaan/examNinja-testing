@@ -1,0 +1,5 @@
+question,option1,option2,option3,option4,correct_answer,answer_description,category,level,questionType
+What is Inheritance?,Yes,No,,,Yes,"Inheritance allows one class to inherit fields and methods from another.","OOP",easy,MCQ
+Which keyword is used for inheritance in Java?,extends,implements,new,super,,,"Core Java",easy,MCQ
+,True,False,,,True,"Java can run on any platform with JVM.","Core Java",easy,True/False
+True or False: Java is platform-independent.,True,False,,,True,,,"Core Java",easy,True/False

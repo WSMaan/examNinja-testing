@@ -1,0 +1,6 @@
+question,option1,option2,option3,option4,correct_answer,answer_description,category,level,questionType
+What is Inheritance?,Yes,No,,,Yes,"Inheritance allows one class to inherit fields and methods from another.","OOP",easy,MCQ
+What is polymorphism?,Yes,No,,,Yes,"Polymorphism allows one method to have different implementations.","OOP",medium,MCQ
+What is polymorphism?,Yes,No,,,Yes,"Duplicate question.","OOP",medium,MCQ
+True or False: Java is platform-independent.,True,False,,,True,"Java can run on any platform with JVM.","Core Java",easy,True/False
+What is Encapsulation?,Yes,No,,,Yes,"Encapsulation restricts access to object data and methods.","OOP",easy,MCQ

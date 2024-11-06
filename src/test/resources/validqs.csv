@@ -1,0 +1,4 @@
+question,option1,option2,option3,option4,correct_answer,answer_description,category,level,questionType,test_id
+What is 2 + 2?,2,3,4,5,4,The sum of 2 and 2 is 4,Math,Easy,MCQ,1
+Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Saturn,Mars,Mars appears red due to iron oxide,Science,Easy,MCQ,2
+Is the sky blue?,True,False,,,True,Due to Rayleigh scattering,Science,Easy,True/False,3
