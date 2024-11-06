@@ -48,7 +48,7 @@ public class TestAdminLoginPage extends BaseSetUp{
         WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
         l_button.click();
 
-        assertTrue("Login was not successful", l_button.isDisplayed());
+        assertTrue("Login was successful", l_button.isDisplayed());
     }
 
     @Test
@@ -139,4 +139,66 @@ public class TestAdminLoginPage extends BaseSetUp{
         assertEquals("Validation failed", pwdError.getText());
     }
 
+    @Test
+    public void testUsernameFieldWithSpace(){
+        // Unhappy path: Unsuccessful login
+        //Enter valid password and username also contain space
+
+        WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
+        userName.sendKeys("adminUserName  ");
+        WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
+        password.sendKeys(p.get("pwd_val").toString());
+        WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
+        l_button.click();
+
+        WebElement pwdError = driver.findElement(By.xpath("//p[@class='MuiTypography-root MuiTypography-body1 css-lcmie7-MuiTypography-root']"));
+        assertEquals("User not found", pwdError.getText());
+    }
+
+    @Test
+    public void testPasswordFieldWithSpace(){
+        // Unhappy path: Unsuccessful login
+        //Enter valid username and password also contain space
+
+        WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
+        userName.sendKeys(p.get("uName").toString());
+        WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
+        password.sendKeys("adminPassword  ");
+        WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
+        l_button.click();
+
+        WebElement pwdError = driver.findElement(By.xpath("//p[@class='MuiTypography-root MuiTypography-body1 css-lcmie7-MuiTypography-root']"));
+        assertEquals("Incorrect password", pwdError.getText());
+    }
+
+    @Test
+    public void testUsernamePasswordWithUppercase(){
+        // Unhappy path: Unsuccessful login
+        //Enter username and password in Uppercase
+
+        WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
+        userName.sendKeys("ADMINUSERNAME");
+        WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
+        password.sendKeys("ADMINPASSWORD");
+        WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
+        l_button.click();
+
+        WebElement pwdError = driver.findElement(By.xpath("//p[@class='MuiTypography-root MuiTypography-body1 css-lcmie7-MuiTypography-root']"));
+        assertEquals("Incorrect password", pwdError.getText());
+    }
+
+    @Test
+    public void testUsernameWithUppercase(){
+        // Unhappy path: Unsuccessful login
+        //Enter username in Uppercase and valid password
+
+        WebElement userName = driver.findElement(By.xpath(p.get("userName").toString()));
+        userName.sendKeys("ADMINUSERNAME");
+        WebElement password = driver.findElement(By.xpath(p.get("pwd").toString()));
+        password.sendKeys(p.get("pwd_val").toString());
+        WebElement l_button = driver.findElement(By.xpath(p.get("login_btn").toString()));
+        l_button.click();
+
+        assertTrue("Login was successful", l_button.isDisplayed());
+    }
 }
