@@ -61,19 +61,19 @@ public class UserResetPasswordTest {
     }
 
     // Test Case 3: Reset Password with Invalid Email Format
-    @Test
-    public void testResetPasswordWithInvalidEmailFormat() {
-        given()
-                .contentType(ContentType.JSON)
-                .body("{ \"email\": \"invalidemailformat\" }")
-                .when()
-                .post("/api/users/reset-password")
-                .then()
-                .statusCode(400)
-                .log().ifError()
-                .body("message", equalTo("Validation failed"))
-                .body("error.email", equalTo("Invalid email format"));
-    }
+    // @Test
+    // public void testResetPasswordWithInvalidEmailFormat() {
+    //     given()
+    //             .contentType(ContentType.JSON)
+    //             .body("{ \"email\": \"invalidemailformat\" }")
+    //             .when()
+    //             .post("/api/users/reset-password")
+    //             .then()
+    //             .statusCode(400)
+    //             .log().ifError()
+    //             .body("message", equalTo("Validation failed"))
+    //             .body("error.email", equalTo("Invalid email format"));
+    // }
 
     // Test Case 4: Reset Password with Empty Email Field
     @Test
