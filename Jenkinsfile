@@ -54,42 +54,26 @@ pipeline {
             }
         }
 
-        stage('Register and Login') {
-            steps {
-                script {
-                    sh 'sleep 30' // Allow time for backend to initialize
+       stage('Register and Login') {
+    steps {
+        script {
+            // Run the API test script
+            sh 'testing/api_tests.sh'
 
-                    def registerResponse = sh(script: """
-                    curl -X POST http://localhost:8081/api/users/register \
-                    -H "Content-Type: application/json" \
-                    -d '{ "email": "foo@example.com", "password": "password@123", "firstName": "Foo", "lastName": "Bar" }'
-                    """, returnStdout: true).trim()
-                    echo "Registration Response: ${registerResponse}"
-
-                    def loginResponse = sh(script: """
-                    curl -X POST http://localhost:8081/api/users/login \
-                    -H "Content-Type: application/json" \
-                    -d '{ "email": "foo@example.com", "password": "password@123" }'
-                    """, returnStdout: true).trim()
-                    echo "Login Response: ${loginResponse}"
-
-                    // Parse the token from the login response if it's present
-                    if (loginResponse.contains("token")) {
-                        env.AUTH_TOKEN = sh(script: "echo '${loginResponse}' | jq -r .token", returnStdout: true).trim()
-                        echo "Obtained Auth Token: ${env.AUTH_TOKEN}"
-                    } else {
-                        error("Login failed: ${loginResponse}")
-                    }
-                }
-            }
-            post {
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'registration/login'
-                    }
-                }
+            // Read the auth token from the generated file
+            env.AUTH_TOKEN = readFile('testing/auth_token.txt').trim()
+            echo "Obtained Auth Token: ${env.AUTH_TOKEN}"
+        }
+    }
+    post {
+        failure {
+            script {
+                env.FAILURE_REASON = 'registration/login'
             }
         }
+    }
+}
+
 
         stage('Run Tests') {
             steps {
