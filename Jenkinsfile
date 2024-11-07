@@ -35,6 +35,20 @@ pipeline {
                 }
             }
         }
+         stage('Build Testing') {
+            steps {
+                dir(TESTING_DIR) {
+                    sh 'mvn clean install'
+                }
+            }
+            post {
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'testing'
+                    }
+                }
+            }
+        }
 
         stage('Build Docker Images Locally') {
             steps {
