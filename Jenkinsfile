@@ -43,6 +43,13 @@ pipeline {
                 }
             }
         }
+        stage('Build test Docker Images Locally') {
+            steps {
+                script {
+                    sh "docker build -t examninja:testing_latest ${TESTING_DIR}"
+                }
+            }
+        }
 
         stage('Run Docker Containers') {
             steps {
