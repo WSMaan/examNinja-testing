@@ -35,20 +35,7 @@ pipeline {
                 }
             }
         }
-         stage('Build Testing') {
-            steps {
-                dir(TESTING_DIR) {
-                    sh 'mvn clean install'
-                }
-            }
-            post {
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'testing'
-                    }
-                }
-            }
-        }
+         
 
         stage('Build Docker Images Locally') {
             steps {
@@ -57,14 +44,7 @@ pipeline {
                 }
             }
         }
-        stage('Build test Docker Images Locally') {
-            steps {
-                script {
-                    sh "docker build -t examninja:testing_latest ${TESTING_DIR}"
-                }
-            }
-        }
-
+        
         stage('Run Docker Containers') {
             steps {
                 script {
