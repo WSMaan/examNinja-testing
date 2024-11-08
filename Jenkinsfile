@@ -54,6 +54,14 @@ pipeline {
         stage('Build Docker Images Locally') {
             steps {
                 script {
+                    // Check that the JAR files exist in the target directories
+                    echo "Checking backend target directory contents:"
+                    sh "ls ${BACKEND_DIR}/target"
+                    
+                    echo "Checking testing target directory contents:"
+                    sh "ls ${TESTING_DIR}/target"
+                    
+                    // Build Docker images using the JAR files in the target directories
                     sh "docker build -t examninja:backend_latest ${BACKEND_DIR}"
                     sh "docker build -t examninja:testing_latest ${TESTING_DIR}"
                 }
@@ -63,7 +71,7 @@ pipeline {
         stage('Run Docker Containers') {
             steps {
                 script {
-                    // Reference the docker-compose.yml file from the testing directory
+                    // Run Docker containers using docker-compose in the testing directory
                     sh 'docker-compose -f testing/docker-compose.yml up -d'
                     sh 'docker logs examninja-backend' // Fetch backend logs immediately after startup
                 }
