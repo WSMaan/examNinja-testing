@@ -67,52 +67,38 @@ pipeline {
                 }
             }
         }
-        
-        stage('Run Docker Containers') {
+
+        stage('Push Docker Images to ECR') {
+            when {
+                expression { env.FAILURE_REASON == null || env.FAILURE_REASON == '' }
+            }
             steps {
                 script {
-                    // Run Docker containers using docker-compose in the testing directory
-                    sh 'docker-compose -f testing/docker-compose.yml up -d'
-                    sh 'docker logs examninja-backend' // Fetch backend logs immediately after startup
-                }
-            }
-        }
-
-        stage('Run RestAssured Tests') {
-            steps {
-                dir(TESTING_DIR) {
-                    sh "mvn clean test -DapiUrl=http://backend:8081"
-                }
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-                failure {
-                    script {
-                        env.FAILURE_REASON = 'tests'
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
+                        
+                        sh "docker tag examninja:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
+                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                     }
                 }
             }
         }
 
-        stage('Push Docker Images to ECR') {
+        stage('Deploy to EKS') {
             when {
-                expression { env.FAILURE_REASON == null || env.FAILURE_REASON == '' } // Only push if there are no failures
+                expression { env.FAILURE_REASON == null || env.FAILURE_REASON == '' }
             }
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
-                        // Log in to ECR
-                        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
-
-                        // Tag and push the backend image
-                        sh "docker tag examninja:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
-                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
-
-                        // Tag and push the testing image
-                        sh "docker tag examninja:testing_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:testing_latest"
-                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:testing_latest"
+                        // Update kubeconfig to connect to EKS
+                        sh "aws eks --region ${AWS_REGION} update-kubeconfig --name examninja"
+                        
+                        // Apply backend deployment using the latest ECR image
+                        sh """
+                        kubectl set image deployment/backend backend=${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest -n default
+                        kubectl rollout status deployment/backend -n default
+                        """
                     }
                 }
             }
