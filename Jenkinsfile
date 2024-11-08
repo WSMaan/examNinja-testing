@@ -35,12 +35,27 @@ pipeline {
                 }
             }
         }
-         
+
+        stage('Build Testing') {
+            steps {
+                dir(TESTING_DIR) {
+                    sh 'mvn clean install'
+                }
+            }
+            post {
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'testing'
+                    }
+                }
+            }
+        }
 
         stage('Build Docker Images Locally') {
             steps {
                 script {
                     sh "docker build -t examninja:backend_latest ${BACKEND_DIR}"
+                    sh "docker build -t examninja:testing_latest ${TESTING_DIR}"
                 }
             }
         }
@@ -55,25 +70,23 @@ pipeline {
             }
         }
 
-       stage('Run RestAssured Tests') {
-    steps {
-        dir(TESTING_DIR) {
-           
-            sh "mvn clean test -DapiUrl=http://backend:8081"
-        }
-    }
-    post {
-        always {
-            junit '**/target/surefire-reports/*.xml'
-        }
-        failure {
-            script {
-                env.FAILURE_REASON = 'tests'
+        stage('Run RestAssured Tests') {
+            steps {
+                dir(TESTING_DIR) {
+                    sh "mvn clean test -DapiUrl=http://backend:8081"
+                }
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+                failure {
+                    script {
+                        env.FAILURE_REASON = 'tests'
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Push Docker Images to ECR') {
             when {
@@ -82,9 +95,16 @@ pipeline {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        // Log in to ECR
                         sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}'
+
+                        // Tag and push the backend image
                         sh "docker tag examninja:backend_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
                         sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:backend_latest"
+
+                        // Tag and push the testing image
+                        sh "docker tag examninja:testing_latest ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:testing_latest"
+                        sh "docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:testing_latest"
                     }
                 }
             }
