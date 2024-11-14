@@ -1,3 +1,5 @@
+import io.qameta.allure.Description;
+import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -16,37 +18,32 @@ public class UserFetchQuestions {
     private String authToken;  // Token will be fetched and stored here
 
     @BeforeAll
-    public static void setup(){
-        RestAssured.baseURI = "http://localhost";  // Replace with the actual base URI
-        RestAssured.port = 8081;                   // Replace with the actual port if needed
+    @Description("Set up base URI and port for UserFetchQuestions API")
+    public static void setup() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = 8081;
     }
 
-    // This method simulates a login and retrieves the JWT token before each test
     @BeforeEach
-    public void fetchAuthToken(){
-        // Simulate login or fetch the token from the token generation endpoint
+    @Description("Fetch authentication token before each test")
+    @Step("Simulate login to retrieve JWT token for authorization")
+    public void fetchAuthToken() {
         Response response = given()
                 .contentType(ContentType.JSON)
-                .body("{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }")  // Replace with actual credentials
+                .body("{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }")
                 .when()
-                .post("/api/users/login")  // Replace with the actual login or token generation endpoint
+                .post("/api/users/login")
                 .then()
                 .statusCode(200)
                 .extract().response();
 
-        /*
-            Bearer Token authentication is a common way to authenticate
-            API requests where the token (JWT in this case) is sent in the Authorization header.
-         */
-        // Extract JWT token from the response
-        authToken = "Bearer " + response.jsonPath().getString("token");  // Adjust the field name if necessary
+        authToken = "Bearer " + response.jsonPath().getString("token");
     }
 
-
-    // Happy Path Test: Valid test_id and page_number
     @Test
+    @Description("Fetch questions for valid test ID and page number (Happy Path)")
+    @Step("Fetch questions with valid test ID and verify response contents")
     public void testGetQuestionsHappyPath() {
-        // Step 1: Fetch the question response and extract it
         Response questionResponse = given()
                 .header("Authorization", authToken)
                 .contentType(ContentType.JSON)
@@ -60,13 +57,24 @@ public class UserFetchQuestions {
                 .log().ifError()
                 .extract().response();
 
-        // Step 2: Extract option values dynamically from the response
+        verifyQuestionResponse(questionResponse);
+        int testId = questionResponse.jsonPath().getInt("questions[0].testId");
+        int questionId = questionResponse.jsonPath().getInt("questions[0].questionId");
+
+        if (questionResponse.jsonPath().getString("questions[0].selectedOption") == null) {
+            saveAnswer(testId, questionId, questionResponse);
+        } else {
+            verifySelectedOption(testId, questionId, questionResponse);
+        }
+    }
+
+    @Step("Verify response content of fetched questions")
+    private void verifyQuestionResponse(Response questionResponse) {
         String option1 = questionResponse.jsonPath().getString("questions[0].option1");
         String option2 = questionResponse.jsonPath().getString("questions[0].option2");
         String option3 = questionResponse.jsonPath().getString("questions[0].option3");
         String option4 = questionResponse.jsonPath().getString("questions[0].option4");
 
-        // Step 3: Perform assertions
         questionResponse.then()
                 .body("testName", notNullValue())
                 .body("questionNumber", matchesRegex("\\d+ of \\d+"))
@@ -82,18 +90,11 @@ public class UserFetchQuestions {
                 .body("questions[0].level", notNullValue())
                 .body("questions[0].questionType", notNullValue())
                 .body("questions[0].testId", equalTo(3))
-                // Updated selectedOption validation with dynamic options
-                .body("questions[0].selectedOption", anyOf(
-                        nullValue(),
-                        equalTo(option1),
-                        equalTo(option2),
-                        equalTo(option3),
-                        equalTo(option4)
-                ));
+                .body("questions[0].selectedOption", anyOf(nullValue(), equalTo(option1), equalTo(option2), equalTo(option3), equalTo(option4)));
+    }
 
-        int testId = questionResponse.jsonPath().getInt("questions[0].testId");
-        int questionId = questionResponse.jsonPath().getInt("questions[0].questionId");
-
+    @Step("Save answer for question if no option is selected")
+    private void saveAnswer(int testId, int questionId, Response questionResponse) {
         String[] options = {
                 questionResponse.jsonPath().getString("questions[0].option1"),
                 questionResponse.jsonPath().getString("questions[0].option2"),
@@ -101,55 +102,44 @@ public class UserFetchQuestions {
                 questionResponse.jsonPath().getString("questions[0].option4")
         };
 
-        String currentSelectedOption = questionResponse.jsonPath().getString("questions[0].selectedOption");
+        String selectedOption = options[new Random().nextInt(options.length)];
 
-        if (currentSelectedOption == null) {
-            String selectedOption = options[new Random().nextInt(options.length)];
-
-            given()
-                    .header("Authorization", authToken)
-                    .contentType(ContentType.JSON)
-                    .body("{ \"questionId\": " + questionId + ", \"testId\": " + testId + ", \"selectedOption\": \"" + selectedOption + "\" }")
-                    .when()
-                    .post("/api/tests/save")
-                    .then()
-                    .statusCode(200)
-                    .body("status", equalTo("success"))
-                    .body("message", equalTo("Answer saved successfully!"));
-
-            given()
-                    .header("Authorization", authToken)
-                    .contentType(ContentType.JSON)
-                    .pathParam("test_id", testId)
-                    .queryParam("page", 7)
-                    .when()
-                    .get("/api/tests/{test_id}/questions")
-                    .then()
-                    .statusCode(200)
-                    .body("questions[0].questionId", equalTo(questionId))
-                    .body("questions[0].selectedOption", equalTo(selectedOption));
-
-        } else {
-            given()
-                    .header("Authorization", authToken)
-                    .contentType(ContentType.JSON)
-                    .pathParam("test_id", testId)
-                    .queryParam("page", 7)
-                    .when()
-                    .get("/api/tests/{test_id}/questions")
-                    .then()
-                    .statusCode(200)
-                    .body("questions[0].selectedOption", equalTo(currentSelectedOption));
-        }
+        given()
+                .header("Authorization", authToken)
+                .contentType(ContentType.JSON)
+                .body("{ \"questionId\": " + questionId + ", \"testId\": " + testId + ", \"selectedOption\": \"" + selectedOption + "\" }")
+                .when()
+                .post("/api/tests/save")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("success"))
+                .body("message", equalTo("Answer saved successfully!"));
     }
 
-    // Unhappy Path Test: Invalid test_id
-    @Test
-    public void testGetQuestionsInvalidTestId(){
+    @Step("Verify previously selected option for question")
+    private void verifySelectedOption(int testId, int questionId, Response questionResponse) {
+        String currentSelectedOption = questionResponse.jsonPath().getString("questions[0].selectedOption");
+
         given()
-                .header("Authorization", authToken)  // Use the JWT token here too
+                .header("Authorization", authToken)
                 .contentType(ContentType.JSON)
-                .pathParam("test_id", 10) // Invalid test_id
+                .pathParam("test_id", testId)
+                .queryParam("page", 7)
+                .when()
+                .get("/api/tests/{test_id}/questions")
+                .then()
+                .statusCode(200)
+                .body("questions[0].selectedOption", equalTo(currentSelectedOption));
+    }
+
+    @Test
+    @Description("Fetch questions with an invalid test ID (Unhappy Path)")
+    @Step("Attempt to fetch questions with an invalid test ID and verify error message")
+    public void testGetQuestionsInvalidTestId() {
+        given()
+                .header("Authorization", authToken)
+                .contentType(ContentType.JSON)
+                .pathParam("test_id", 10)
                 .queryParam("page", 0)
                 .when()
                 .get("/api/tests/{test_id}/questions")
@@ -159,14 +149,15 @@ public class UserFetchQuestions {
                 .body("message", containsString("No questions found for test with Test Id:"));
     }
 
-    // Unhappy Path Test: Invalid page number
     @Test
-    public void testGetQuestionsInvalidPage(){
+    @Description("Fetch questions with an invalid page number (Unhappy Path)")
+    @Step("Attempt to fetch questions with an invalid page number and verify error message")
+    public void testGetQuestionsInvalidPage() {
         given()
-                .header("Authorization", authToken)  // Use the JWT token here too
+                .header("Authorization", authToken)
                 .contentType(ContentType.JSON)
                 .pathParam("test_id", 3)
-                .queryParam("page", 66) // Page number out of bounds
+                .queryParam("page", 66)
                 .when()
                 .get("/api/tests/{test_id}/questions")
                 .then()
@@ -174,5 +165,4 @@ public class UserFetchQuestions {
                 .log().ifError()
                 .body("message", containsString("Requested page is out of bounds. Maximum page number:"));
     }
-
 }

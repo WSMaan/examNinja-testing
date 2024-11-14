@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -14,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.3</junit.version>
         <surefire.version>3.0.0-M7</surefire.version>
+        <allure.version>2.13.9</allure.version>
     </properties>
 
     <dependencies>
@@ -49,40 +49,41 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- webdrivermanager -->
+        <!-- Allure TestNG Dependency -->
         <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.9.2</version>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <version>${allure.version}</version>
         </dependency>
-
-        <!-- org.seleniumhq.selenium/selenium-java -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>4.25.0</version>
-        </dependency>
-
     </dependencies>
-
 
     <build>
         <plugins>
-            <!-- Surefire Plugin to Run Tests and Generate Reports -->
+            <!-- Surefire Plugin to Run Tests and Generate Basic Reports -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>${basedir}/testng.xml</suiteXmlFile>
+                    </suiteXmlFiles>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <properties>
-                        <!-- Enable JUnit 5 Tests in Surefire -->
-                        <configurationParameters>
-                            junit.jupiter.extensions.autodetection.enabled=true
-                        </configurationParameters>
-                    </properties>
+                    <systemPropertyVariables>
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <!-- Allure Maven Plugin for Generating Reports -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.10.0</version>
+                <configuration>
+                    <resultsDirectory>${project.build.directory}/allure-results</resultsDirectory>
                 </configuration>
             </plugin>
         </plugins>
