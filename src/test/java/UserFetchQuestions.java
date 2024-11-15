@@ -1,59 +1,31 @@
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import util.BaseTestClass;
 import java.util.Random;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.*;
 
-public class UserFetchQuestions {
-
-    private String authToken;  // Token will be fetched and stored here
-
-    @BeforeAll
-    public static void setup(){
-        RestAssured.baseURI = "http://localhost";  // Replace with the actual base URI
-        RestAssured.port = 8081;                   // Replace with the actual port if needed
-    }
-
-    // This method simulates a login and retrieves the JWT token before each test
-    @BeforeEach
-    public void fetchAuthToken(){
-        // Simulate login or fetch the token from the token generation endpoint
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .body("{ \"email\": \"foo@example.com\", \"password\": \"fooWoo@123\" }")  // Replace with actual credentials
-                .when()
-                .post("/api/users/login")  // Replace with the actual login or token generation endpoint
-                .then()
-                .statusCode(200)
-                .extract().response();
-
-        /*
-            Bearer Token authentication is a common way to authenticate
-            API requests where the token (JWT in this case) is sent in the Authorization header.
-         */
-        // Extract JWT token from the response
-        authToken = "Bearer " + response.jsonPath().getString("token");  // Adjust the field name if necessary
-    }
-
+public class UserFetchQuestions extends BaseTestClass {
 
     // Happy Path Test: Valid test_id and page_number
     @Test
     public void testGetQuestionsHappyPath() {
+        // Generate random test_id and page number using Random class
+        Random random = new Random();
+        int randomTestId = random.nextInt(3) + 1;  // Generates a value between 1 and 3
+        int page = random.nextInt(10);  // Random page between 0 and 9
+
         // Step 1: Fetch the question response and extract it
         Response questionResponse = given()
                 .header("Authorization", authToken)
                 .contentType(ContentType.JSON)
                 .when()
-                .pathParam("test_id", 3)
-                .queryParam("page", 7)
-                .get("/api/tests/{test_id}/questions")
+                .pathParam("test_id", randomTestId)
+                .queryParam("page", page)
+                .get(questionsEndpoint)
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
@@ -81,7 +53,7 @@ public class UserFetchQuestions {
                 .body("questions[0].category", notNullValue())
                 .body("questions[0].level", notNullValue())
                 .body("questions[0].questionType", notNullValue())
-                .body("questions[0].testId", equalTo(3))
+                .body("questions[0].testId", equalTo(questionResponse.jsonPath().getInt("questions[0].testId")))
                 // Updated selectedOption validation with dynamic options
                 .body("questions[0].selectedOption", anyOf(
                         nullValue(),
@@ -89,16 +61,19 @@ public class UserFetchQuestions {
                         equalTo(option2),
                         equalTo(option3),
                         equalTo(option4)
-                ));
+                ))
+                .body("pageDetails.pageNumber", equalTo(questionResponse.jsonPath().getInt("pageDetails.pageNumber")))
+                .body("pageDetails.pageSize", equalTo(questionResponse.jsonPath().getInt("pageDetails.pageSize")))
+                .body("pageDetails.totalPages", equalTo(questionResponse.jsonPath().getInt("pageDetails.totalPages")))
+                .body("pageDetails.totalElements", equalTo(questionResponse.jsonPath().getInt("pageDetails.totalElements")))
+                .body("pageDetails.lastPage", equalTo(questionResponse.jsonPath().getBoolean("pageDetails.lastPage")));
 
         int testId = questionResponse.jsonPath().getInt("questions[0].testId");
         int questionId = questionResponse.jsonPath().getInt("questions[0].questionId");
+        int pageNumber=questionResponse.jsonPath().getInt("pageDetails.pageNumber");
 
         String[] options = {
-                questionResponse.jsonPath().getString("questions[0].option1"),
-                questionResponse.jsonPath().getString("questions[0].option2"),
-                questionResponse.jsonPath().getString("questions[0].option3"),
-                questionResponse.jsonPath().getString("questions[0].option4")
+                option1,option2,option3,option4
         };
 
         String currentSelectedOption = questionResponse.jsonPath().getString("questions[0].selectedOption");
@@ -111,7 +86,7 @@ public class UserFetchQuestions {
                     .contentType(ContentType.JSON)
                     .body("{ \"questionId\": " + questionId + ", \"testId\": " + testId + ", \"selectedOption\": \"" + selectedOption + "\" }")
                     .when()
-                    .post("/api/tests/save")
+                    .post(saveAnswerEndpoint)
                     .then()
                     .statusCode(200)
                     .body("status", equalTo("success"))
@@ -121,9 +96,9 @@ public class UserFetchQuestions {
                     .header("Authorization", authToken)
                     .contentType(ContentType.JSON)
                     .pathParam("test_id", testId)
-                    .queryParam("page", 7)
+                    .queryParam("page", pageNumber)
                     .when()
-                    .get("/api/tests/{test_id}/questions")
+                    .get(questionsEndpoint)
                     .then()
                     .statusCode(200)
                     .body("questions[0].questionId", equalTo(questionId))
@@ -134,9 +109,9 @@ public class UserFetchQuestions {
                     .header("Authorization", authToken)
                     .contentType(ContentType.JSON)
                     .pathParam("test_id", testId)
-                    .queryParam("page", 7)
+                    .queryParam("page", pageNumber)
                     .when()
-                    .get("/api/tests/{test_id}/questions")
+                    .get(questionsEndpoint)
                     .then()
                     .statusCode(200)
                     .body("questions[0].selectedOption", equalTo(currentSelectedOption));
@@ -152,7 +127,7 @@ public class UserFetchQuestions {
                 .pathParam("test_id", 10) // Invalid test_id
                 .queryParam("page", 0)
                 .when()
-                .get("/api/tests/{test_id}/questions")
+                .get(questionsEndpoint)
                 .then()
                 .statusCode(400)
                 .log().ifError()
@@ -165,10 +140,10 @@ public class UserFetchQuestions {
         given()
                 .header("Authorization", authToken)  // Use the JWT token here too
                 .contentType(ContentType.JSON)
-                .pathParam("test_id", 3)
+                .pathParam("test_id", 1)
                 .queryParam("page", 66) // Page number out of bounds
                 .when()
-                .get("/api/tests/{test_id}/questions")
+                .get(questionsEndpoint)
                 .then()
                 .statusCode(400)
                 .log().ifError()
