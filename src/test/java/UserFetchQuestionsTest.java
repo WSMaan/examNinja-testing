@@ -8,11 +8,11 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.*;
 
-public class UserFetchQuestions extends BaseTestClass {
+public class UserFetchQuestionsTest extends BaseTestClass {
 
     // Happy Path Test: Valid test_id and page_number
     @Test
-    public void testGetQuestionsHappyPath() {
+    public void testGetQuestionsHappyPath(){
         // Generate random test_id and page number using Random class
         Random random = new Random();
         int randomTestId = random.nextInt(3) + 1;  // Generates a value between 1 and 3
@@ -32,11 +32,15 @@ public class UserFetchQuestions extends BaseTestClass {
                 .log().ifError()
                 .extract().response();
 
-        // Step 2: Extract option values dynamically from the response
+        // Step 2: Extract option values and selectedOption dynamically from the response
         String option1 = questionResponse.jsonPath().getString("questions[0].option1");
         String option2 = questionResponse.jsonPath().getString("questions[0].option2");
         String option3 = questionResponse.jsonPath().getString("questions[0].option3");
         String option4 = questionResponse.jsonPath().getString("questions[0].option4");
+
+        String selectedOptionValue = questionResponse.jsonPath().getString("selectedOption.value");
+        String selectedOptionLabel = questionResponse.jsonPath().getString("selectedOption.label");
+        // String[] optionsValue={"option1", "option2","option3","option4"};
 
         // Step 3: Perform assertions
         questionResponse.then()
@@ -54,8 +58,15 @@ public class UserFetchQuestions extends BaseTestClass {
                 .body("questions[0].level", notNullValue())
                 .body("questions[0].questionType", notNullValue())
                 .body("questions[0].testId", equalTo(questionResponse.jsonPath().getInt("questions[0].testId")))
-                // Updated selectedOption validation with dynamic options
-                .body("questions[0].selectedOption", anyOf(
+                // Validate selectedOption's value and label dynamically
+                .body("selectedOption.value", anyOf(
+                        nullValue(),
+                        equalTo("option1"),
+                        equalTo("option2"),
+                        equalTo("option3"),
+                        equalTo("option4")
+                ))
+                .body("selectedOption.label", anyOf(
                         nullValue(),
                         equalTo(option1),
                         equalTo(option2),
@@ -70,21 +81,22 @@ public class UserFetchQuestions extends BaseTestClass {
 
         int testId = questionResponse.jsonPath().getInt("questions[0].testId");
         int questionId = questionResponse.jsonPath().getInt("questions[0].questionId");
-        int pageNumber=questionResponse.jsonPath().getInt("pageDetails.pageNumber");
+        int pageNumber = questionResponse.jsonPath().getInt("pageDetails.pageNumber");
 
-        String[] options = {
-                option1,option2,option3,option4
-        };
+        String[] options = {option1, option2, option3, option4};
 
-        String currentSelectedOption = questionResponse.jsonPath().getString("questions[0].selectedOption");
+        if (selectedOptionValue == null && selectedOptionLabel == null) {
+            // Step 4: Select a random option if no option is selected
+            int randomIndex = new Random().nextInt(options.length); // Random index for options array
+            String selectedOptionValueRandom = "option" + (randomIndex + 1); // "option1", "option2", etc.
+            String selectedOptionLabelRandom = options[randomIndex]; // Corresponding label from options array
 
-        if (currentSelectedOption == null) {
-            String selectedOption = options[new Random().nextInt(options.length)];
-
+            // Save the answer with the randomly selected option
             given()
                     .header("Authorization", authToken)
                     .contentType(ContentType.JSON)
-                    .body("{ \"questionId\": " + questionId + ", \"testId\": " + testId + ", \"selectedOption\": \"" + selectedOption + "\" }")
+                    .body("{ \"questionId\": " + questionId + ", \"testId\": " + testId +
+                            ", \"selectedOption\": {\"value\": \"" + selectedOptionValueRandom + "\", \"label\": \"" + selectedOptionLabelRandom + "\"} }")
                     .when()
                     .post(saveAnswerEndpoint)
                     .then()
@@ -92,6 +104,7 @@ public class UserFetchQuestions extends BaseTestClass {
                     .body("status", equalTo("success"))
                     .body("message", equalTo("Answer saved successfully!"));
 
+            // Verify that the selected option is correctly saved
             given()
                     .header("Authorization", authToken)
                     .contentType(ContentType.JSON)
@@ -102,9 +115,10 @@ public class UserFetchQuestions extends BaseTestClass {
                     .then()
                     .statusCode(200)
                     .body("questions[0].questionId", equalTo(questionId))
-                    .body("questions[0].selectedOption", equalTo(selectedOption));
-
+                    .body("selectedOption.value", equalTo(selectedOptionValueRandom))
+                    .body("selectedOption.label", equalTo(selectedOptionLabelRandom));
         } else {
+            // Step 5: Verify that the previously selected option remains the same
             given()
                     .header("Authorization", authToken)
                     .contentType(ContentType.JSON)
@@ -114,13 +128,14 @@ public class UserFetchQuestions extends BaseTestClass {
                     .get(questionsEndpoint)
                     .then()
                     .statusCode(200)
-                    .body("questions[0].selectedOption", equalTo(currentSelectedOption));
+                    .body("selectedOption.value", equalTo(selectedOptionValue))
+                    .body("selectedOption.label", equalTo(selectedOptionLabel));
         }
     }
 
     // Unhappy Path Test: Invalid test_id
     @Test
-    public void testGetQuestionsInvalidTestId(){
+    public void testGetQuestionsInvalidTestId() {
         given()
                 .header("Authorization", authToken)  // Use the JWT token here too
                 .contentType(ContentType.JSON)
@@ -136,7 +151,7 @@ public class UserFetchQuestions extends BaseTestClass {
 
     // Unhappy Path Test: Invalid page number
     @Test
-    public void testGetQuestionsInvalidPage(){
+    public void testGetQuestionsInvalidPage() {
         given()
                 .header("Authorization", authToken)  // Use the JWT token here too
                 .contentType(ContentType.JSON)
@@ -149,5 +164,4 @@ public class UserFetchQuestions extends BaseTestClass {
                 .log().ifError()
                 .body("message", containsString("Requested page is out of bounds. Maximum page number:"));
     }
-
 }
